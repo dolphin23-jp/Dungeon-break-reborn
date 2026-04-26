@@ -13,7 +13,7 @@ export class Enemy{
     this.speed=t.speed*(1+wave*0.014); this.damage=t.damage*atkScale*depth.enemyAtk; this.xp=t.xp*Math.pow(1.1,wave-1);
     this.score=t.score; this.flags=t;
     this.cd=rand(0,1.4); this.shootCd=rand(.4,2.2); this.specialCd=rand(1.2,3.5); this.summonCd=rand(3,5);
-    this.slow=0; this.poison=0; this.poisonDps=0; this.bleed=0; this.bleedDps=0;
+    this.slow=0; this.poison=0; this.poisonDps=0; this.bleed=0; this.bleedDps=0; this.burn=0; this.burnDps=0; this.wasExecuted=false;
     this.critResist=Math.min(.55,(t.critResist||0)+wave*.006+(t.boss?.08:0));
     this.statusResist=Math.min(.72,(t.statusResist||0)+wave*.008+(t.boss?.1:0));
     this.areaResist=t.areaResist||0;
@@ -23,6 +23,7 @@ export class Enemy{
     const player=game.player, enemies=game.enemies;
     if(this.poison>0){ this.poison-=dt; this.hp-=this.poisonDps*dt; }
     if(this.bleed>0){ this.bleed-=dt; this.hp-=this.bleedDps*dt; }
+    if(this.burn>0){ this.burn-=dt; this.hp-=this.burnDps*dt; }
     if(this.slow>0) this.slow-=dt;
     const n = normalize(player.x-this.x, player.y-this.y);
     let desiredRange = this.flags.ranged ? 230 : 0;
