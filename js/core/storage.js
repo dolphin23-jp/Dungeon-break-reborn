@@ -3,6 +3,23 @@ import { UPGRADE_DEFS } from '../data/upgrades.js';
 import { DEFAULT_CHARACTER_ID, CHARACTERS } from '../data/characters.js';
 import { getUnlockedMasteryRewards, calculateMasteryLevel } from '../data/mastery.js';
 
+const DEFAULT_AUTOMATION_SETTINGS = {
+  autoRunEnabled: false,
+  skillSelectionMode: 'manual',
+  waveRewardMode: 'manual',
+  autoReturnEnabled: false,
+  autoReturnHpThreshold: 30,
+  autoReturnWaveTarget: 20,
+  skillAutoPreset: 'balanced',
+  waveRewardPreset: 'expFixed',
+  lightweightMode: false,
+  speedLightweightMode: true,
+  damageNumberMode: 'normal',
+  orbOptimization: true,
+  enemyDensityMode: 'balanced',
+  autoLogLimit: 50,
+};
+
 function defaultCharacterMastery() {
   return {
     masteryExp: 0,
@@ -23,7 +40,7 @@ export function defaultSave() {
   const characterMastery = {};
   for (const c of CHARACTERS) characterMastery[c.id] = defaultCharacterMastery();
   return {
-    version: 7,
+    version: 8,
     abyssStones: 0,
     bestWave: 0,
     totalRuns: 0,
@@ -48,6 +65,8 @@ export function defaultSave() {
       autoDismantleRarity: 'None',
       selectedCharacter: DEFAULT_CHARACTER_ID,
       selectedChallenge: 'none',
+      automation: { ...DEFAULT_AUTOMATION_SETTINGS },
+      lastRunSummary: null,
     },
   };
 }
@@ -71,7 +90,7 @@ export function normalizeSave(parsed = {}) {
   const normalized = {
     ...base,
     ...parsed,
-    version: 7,
+    version: 8,
     upgrades: { ...base.upgrades, ...(parsed.upgrades || {}) },
     achievements: { ...(parsed.achievements || {}) },
     equipment: { ...base.equipment, ...(parsed.equipment || {}) },
@@ -98,6 +117,8 @@ export function normalizeSave(parsed = {}) {
     cm[char.id] = current;
   }
   normalized.characterMastery = cm;
+  normalized.settings.automation = { ...DEFAULT_AUTOMATION_SETTINGS, ...(normalized.settings.automation || {}) };
+  normalized.settings.lastRunSummary = normalized.settings.lastRunSummary || null;
 
   for (const slot of EQUIPMENT_SLOTS) normalized.equipment[slot] = normalizeItem(normalized.equipment[slot]) || null;
   for (const [k, v] of Object.entries(normalized.equipment)) if (!v || !v.id) normalized.equipment[k] = null;
@@ -109,6 +130,7 @@ export function loadSave() {
   try {
     const keys = [
       CONFIG.storageKey,
+      'dungeonBreakReborn.phase7.save',
       'dungeonBreakReborn.phase6.save',
       'dungeonBreakReborn.phase5.save',
       'dungeonBreakReborn.phase4.save',
