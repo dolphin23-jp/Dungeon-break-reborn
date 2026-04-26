@@ -1,6 +1,6 @@
 import { CONFIG } from '../core/constants.js';
 import { clamp } from '../core/utils.js';
-import { setCounts } from '../systems/loot.js';
+import { setCounts, collectEquipmentStats } from '../systems/loot.js';
 
 const sumBonus = (equipment, key) => Object.values(equipment || {}).reduce((a,it)=>a + (it?.stats?.[key] || 0), 0);
 const hasLegendary = (equipment, id) => Object.values(equipment || {}).some(it => it?.legendaryId === id);
@@ -12,6 +12,9 @@ export class Player{
     const lv = id => up[id] || 0;
     const eq = save.equipment || {};
     const sets = setCounts(eq);
+    const eqStats = collectEquipmentStats(eq);
+    const sumBase = (key) => eqStats.base[key] || 0;
+    const sumAffix = (key) => eqStats.affix[key] || 0;
     const hasSet = (id,n)=> (sets[id]||0) >= n;
     this.character = character;
     this.characterGrowth = character?.growth || {};
@@ -22,28 +25,41 @@ export class Player{
     this.summonAttackSpeed = 1;
     this.cooldownReduction = 0;
     this.x = CONFIG.arena.width/2; this.y = CONFIG.arena.height/2; this.r = CONFIG.player.radius;
-    this.maxHp = CONFIG.player.baseHp + lv('vitality')*4 + sumBonus(eq,'hp') + (hasSet('Guardian',2)?45:0) + (character?.initialStats?.maxHp||0);
-    this.hp = this.maxHp; this.shield = Math.floor(this.maxHp*(lv('barrier')*0.01 + sumBonus(eq,'barrier') + (hasSet('Guardian',2)?.08:0) + (character?.initialStats?.shieldRate||0)));
+    this.maxHp = CONFIG.player.baseHp + lv('vitality')*4 + sumBase('hp') + (hasSet('Guardian',2)?45:0) + (character?.initialStats?.maxHp||0);
+    this.hp = this.maxHp; this.shield = Math.floor(this.maxHp*(lv('barrier')*0.01 + sumBase('barrier') + (hasSet('Guardian',2)?.08:0) + (character?.initialStats?.shieldRate||0))); 
     this.level = 1; this.xp = 0; this.nextXp = CONFIG.xp.base;
-    this.baseDamage = CONFIG.player.baseDamage + lv('power')*1.8 + lv('summon')*0.8 + sumBonus(eq,'damageFlat') + (hasSet('Inferno',2)?4:0) + (hasSet('Storm',2)?2:0);
+    this.baseDamage = CONFIG.player.baseDamage + lv('power')*1.8 + lv('summon')*0.8 + sumBase('damageFlat') + (hasSet('Inferno',2)?4:0) + (hasSet('Storm',2)?2:0);
     this.baseDamage *= 1 + (character?.initialStats?.damageMult||0);
     this.baseSpeed = CONFIG.player.baseSpeed + lv('speed')*1.5;
     this.baseAttackSpeed = CONFIG.player.baseAttackSpeed * (1 + lv('haste')*0.018 + (hasSet('Storm',2)?.08:0) + (character?.initialStats?.attackSpeedMult||0));
-    this.baseRange = CONFIG.player.baseRange + lv('range')*2.2 + sumBonus(eq,'range') + (hasSet('Storm',4)?28:0);
-    this.magnet = 72 + lv('magnet')*3 + sumBonus(eq,'magnet');
-    this.regen = lv('regen')*0.08 + sumBonus(eq,'regen');
-    this.guard = Math.min(0.72, lv('guard')*0.006 + sumBonus(eq,'guard') + (character?.initialStats?.guard||0));
-    this.evasion = Math.min(0.42, lv('evasion')*0.0025 + sumBonus(eq,'evasion'));
-    this.stoneGain = lv('stoneGain')*0.035 + sumBonus(eq,'stoneGain');
-    this.dropRate = lv('dropRate')*0.006 + sumBonus(eq,'dropRate');
-    this.rarityLuck = lv('rarityLuck')*0.01 + sumBonus(eq,'rarityLuck');
-    this.xpGain = lv('xpGain')*0.015 + sumBonus(eq,'xpGain');
+    this.baseRange = CONFIG.player.baseRange + lv('range')*2.2 + sumBase('range') + (hasSet('Storm',4)?28:0);
+    this.magnet = 72 + lv('magnet')*3 + sumBase('magnet');
+    this.regen = lv('regen')*0.08 + sumBase('regen');
+    this.guard = Math.min(0.72, lv('guard')*0.006 + sumBase('guard') + (character?.initialStats?.guard||0));
+    this.evasion = Math.min(0.42, lv('evasion')*0.0025 + sumBase('evasion'));
+    this.stoneGain = lv('stoneGain')*0.035 + sumBase('stoneGain');
+    this.dropRate = lv('dropRate')*0.006 + sumBase('dropRate');
+    this.rarityLuck = lv('rarityLuck')*0.01 + sumBase('rarityLuck');
+    this.xpGain = lv('xpGain')*0.015 + sumBase('xpGain');
     this.execution = lv('execution')*0.015 + (hasSet('Execution',2)?.10:0);
-    this.elemental = lv('elemental')*0.012 + sumBonus(eq,'elemental') + (hasSet('Inferno',2)?.08:0) + (hasSet('Venom',2)?.08:0) + (hasSet('Frost',2)?.06:0) + (character?.initialStats?.elemental||0);
+    this.elemental = lv('elemental')*0.012 + sumBase('elemental') + (hasSet('Inferno',2)?.08:0) + (hasSet('Venom',2)?.08:0) + (hasSet('Frost',2)?.06:0) + (character?.initialStats?.elemental||0);
     this.mods = {
-      damageMult:sumBonus(eq,'damageMult'), speedMult:sumBonus(eq,'speedMult'), attackSpeedMult:sumBonus(eq,'attackSpeedMult'),
-      critChance:0.05+lv('critical')*0.004+sumBonus(eq,'critChance') + (character?.initialStats?.critChance||0), critDamage:1.5+lv('critDamage')*0.01+sumBonus(eq,'critDamage')
+      damageMult:sumBase('damageMult'), speedMult:sumBase('speedMult'), attackSpeedMult:sumBase('attackSpeedMult'),
+      critChance:0.05+lv('critical')*0.004+sumBase('critChance') + (character?.initialStats?.critChance||0), critDamage:1.5+lv('critDamage')*0.01+sumBase('critDamage')
     };
+
+    this.maxHp *= 1 + sumAffix('hpPercent');
+    this.mods.damageMult += sumAffix('damageMult');
+    this.mods.attackSpeedMult += sumAffix('attackSpeedMult');
+    this.cooldownReduction = Math.min(0.7, this.cooldownReduction + sumAffix('cooldownReduction'));
+    this.guard = Math.min(0.88, this.guard + sumAffix('damageReduction'));
+    this.xpGain += sumAffix('xpGain');
+    this.stoneGain += sumAffix('stoneGain');
+    this.dropRate += sumAffix('dropRate') + (save.missionDropRateBonus || 0);
+    this.summonDamage += sumAffix('summonDamage');
+    const elemAffix = sumAffix('fireDamage') + sumAffix('lightningDamage') + sumAffix('iceDamage') + sumAffix('poisonDamage') + sumAffix('bleedDamage');
+    this.elemental += elemAffix;
+
     this.flags = {
       chainLightning: countLegendary(eq,'stormBook'),
       fireExplosion: countLegendary(eq,'emberCore'),
@@ -93,6 +109,8 @@ export class Player{
     return ups;
   }
   heal(amount){
+    const healMult=this.healingMultiplier||1;
+    amount*=healMult;
     const before=this.hp; this.hp=Math.min(this.maxHp,this.hp+amount);
     const over=Math.max(0,before+amount-this.maxHp);
     if(this.flags.overhealBarrier && over>0) this.shield=Math.min(this.maxHp*1.8,this.shield+over*.75);
