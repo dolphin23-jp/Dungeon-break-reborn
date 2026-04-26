@@ -1,6 +1,7 @@
 import { Projectile } from '../entities/projectile.js';
 import { CONFIG } from '../core/constants.js';
 import { distSq, pick, normalize } from '../core/utils.js';
+import { getPerformanceProfile } from './performance.js';
 
 export class CombatSystem{
   constructor(game){ this.game=game; }
@@ -66,7 +67,11 @@ export class CombatSystem{
   }
   applyHit(e,dmg,{area=false}={}){
     const p=this.game.player; if(area) dmg*=1-(e.areaResist||0);
-    e.hp-=dmg; this.game.floatText(e.x,e.y,Math.floor(dmg),'#fff');
+    e.hp-=dmg;
+    const perf=getPerformanceProfile(this.game);
+    if(!perf.hideDamageText){
+      if(!perf.reduceDamageText || Math.random()<0.35) this.game.floatText(e.x,e.y,Math.floor(dmg),'#fff');
+    }
     if(p.flags.iceSlow && Math.random()>e.statusResist){e.slow=.9+.25*p.flags.iceSlow; this.game.effects.push({type:'circle',x:e.x,y:e.y,r:e.r+6,life:.12,color:'#8ce9ff'}); if(p.flags.frostNova) e.hp-=p.damage*.07*p.flags.frostNova;}
     if(p.flags.poison && Math.random()>e.statusResist){e.poison=(3.2+.12*p.flags.poison+(p.flags.plagueAbyss?.8:0))*p.statusDuration;e.poisonDps=p.damage*(.18+.08*p.flags.poison+(p.flags.plagueAbyss?.08:0))*(1+p.elemental)*p.statusDamage;}
     if(p.flags.bleed && Math.random()>e.statusResist){e.bleed=(2.4+.12*p.flags.bleed)*p.statusDuration;e.bleedDps=p.damage*(.16+.08*p.flags.bleed)*(1+p.elemental)*p.statusDamage;}
