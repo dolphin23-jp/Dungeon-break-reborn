@@ -1,10 +1,10 @@
 export const CONFIG = {
-  storageKey: 'dungeonBreakReborn.phase3.save',
+  storageKey: 'dungeonBreakReborn.phase5.save',
   arena: { width: 960, height: 620 },
   player: { radius: 16, baseHp: 120, baseSpeed: 250, baseDamage: 13, baseAttackSpeed: 1.18, baseRange: 195 },
   xp: { base: 12, growth: 1.22 },
   wave: { duration: 28, bossEvery: 5, maxEnemiesBase: 54 },
-  inventory: { maxItems: 120 },
+  inventory: { maxItems: 160 },
   debug: { stones: 100000 },
 };
 
