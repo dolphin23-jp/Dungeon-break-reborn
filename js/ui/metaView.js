@@ -5,7 +5,7 @@ import { CONFIG } from '../core/constants.js';
 import { format } from '../core/utils.js';
 
 let bulkMode='1';
-export function upgradeCost(def, lv){ return Math.floor(def.baseCost * Math.pow(def.costScale, lv)); }
+export function upgradeCost(def, lv){ const early=lv<15?0.65:lv<40?0.8:1; return Math.floor(def.baseCost * Math.pow(def.costScale, lv) * early); }
 function canBuy(save, def){ return save.abyssStones >= upgradeCost(def, save.upgrades[def.id]||0); }
 function buyOne(save, def){ const lv=save.upgrades[def.id]||0; const cost=upgradeCost(def,lv); if(save.abyssStones<cost)return false; save.abyssStones-=cost; save.upgrades[def.id]=lv+1; return true; }
 export function setupMeta(app){

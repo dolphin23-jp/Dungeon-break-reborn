@@ -91,6 +91,59 @@ export const SKILL_POOL = [
     applyLevel:p=>{ p.regen += 0.8; }
   },
 
+
+  {
+    id:'steelSkin', name:'鋼の皮膚', rarity:'Rare', maxLevel:10, tags:['防御'],
+    desc:'被ダメージを恒常軽減し、高Lvで接触耐性も得る。', perLevel:'軽減 +2.4%。',
+    milestones:{7:'接触ダメージ追加軽減が発動'},
+    applyLevel:p=>{ p.guard = Math.min(0.82, p.guard + 0.024); if((p.flags.steelSkinLv=(p.flags.steelSkinLv||0)+1)>=7) p.flags.contactGuard=(p.flags.contactGuard||0)+1; }
+  },
+  {
+    id:'emergencyBarrier', name:'緊急障壁', rarity:'Rare', maxLevel:8, tags:['障壁','防御'],
+    desc:'HPが一定以下で自動障壁を展開する。', perLevel:'発動時障壁量と再発動間隔が改善。',
+    applyLevel:p=>{ p.flags.emergencyBarrier=(p.flags.emergencyBarrier||0)+1; }
+  },
+  {
+    id:'dodgeInstinct', name:'回避本能', rarity:'Rare', maxLevel:10, tags:['回避','防御'],
+    desc:'移動中の回避率が大きく上昇。オート移動でも有効。', perLevel:'移動中回避率 +8%。',
+    applyLevel:p=>{ p.flags.dodgeWhileMoving=(p.flags.dodgeWhileMoving||0)+1; }
+  },
+  {
+    id:'arcDeflect', name:'魔弾偏向', rarity:'Epic', maxLevel:8, tags:['反射','防御'],
+    desc:'敵弾を無効化し、確率で反射する。', perLevel:'偏向率と反射弾威力上昇。',
+    applyLevel:p=>{ p.flags.reflectBullets=(p.flags.reflectBullets||0)+1; }
+  },
+  {
+    id:'thornRevenge', name:'報復の棘', rarity:'Epic', maxLevel:8, tags:['反射','制御'],
+    desc:'被弾時に周囲へ反射ダメージを返す。', perLevel:'反撃威力・範囲上昇。',
+    applyLevel:p=>{ p.flags.thornRevenge=(p.flags.thornRevenge||0)+1; }
+  },
+  {
+    id:'unyielding', name:'不屈', rarity:'Legendary', maxLevel:3, tags:['不屈','防御'],
+    desc:'致死ダメージを一度だけ耐える。Lvで回復量と無敵増加。', perLevel:'不屈回復量+無敵時間上昇。',
+    applyLevel:p=>{ p.flags.undying=1; p.flags.undyingRecovery=(p.flags.undyingRecovery||0)+1; }
+  },
+  {
+    id:'overhealGuard', name:'過剰治癒', rarity:'Epic', maxLevel:8, tags:['回復','障壁'],
+    desc:'最大HP超過分の回復を障壁化する。', perLevel:'変換効率・障壁上限上昇。',
+    applyLevel:p=>{ p.flags.overhealBarrier=(p.flags.overhealBarrier||0)+1; p.regen+=0.35; }
+  },
+  {
+    id:'guardianField', name:'守護領域', rarity:'Epic', maxLevel:8, tags:['防御','制御'],
+    desc:'一定時間ごとに守護領域を展開し被ダメージを抑える。', perLevel:'領域時間・軽減率上昇。',
+    applyLevel:p=>{ p.flags.guardianField=(p.flags.guardianField||0)+1; }
+  },
+  {
+    id:'repulseCarapace', name:'弾き返す甲殻', rarity:'Epic', maxLevel:8, tags:['反射','防御'],
+    desc:'接触してきた敵へ反射ダメージを与える。', perLevel:'接触反射ダメージ上昇。',
+    applyLevel:p=>{ p.flags.reflect=(p.flags.reflect||0)+1; p.flags.contactThorns=(p.flags.contactThorns||0)+1; }
+  },
+  {
+    id:'recoveryCore', name:'再生因子改', rarity:'Rare', maxLevel:8, tags:['回復','防御'],
+    desc:'低HP時の回復量が増加する再生。', perLevel:'再生 +0.7/秒、低HP補正増加。',
+    applyLevel:p=>{ p.regen += 0.7; p.flags.recoveryBoost=(p.flags.recoveryBoost||0)+1; }
+  },
+
   {
     id:'barrier', name:'障壁生成', rarity:'Epic', maxLevel:8, tags:['障壁','防御'],
     desc:'最大HPに応じた障壁を即時獲得する。', perLevel:'障壁 +最大HPの18%。',

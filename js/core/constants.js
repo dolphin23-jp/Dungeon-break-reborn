@@ -1,5 +1,5 @@
 export const CONFIG = {
-  storageKey: 'dungeonBreakReborn.phase5.save',
+  storageKey: 'dungeonBreakReborn.phase6.save',
   arena: { width: 960, height: 620 },
   player: { radius: 16, baseHp: 120, baseSpeed: 250, baseDamage: 13, baseAttackSpeed: 1.18, baseRange: 195 },
   xp: { base: 12, growth: 1.22 },
@@ -19,6 +19,4 @@ export const RARITIES = {
 
 export const EQUIPMENT_SLOTS = ['武器','防具','指輪','首飾り','レリック','靴','手袋','魔導書','召喚具'];
 
-export const GAME_STATE = {
-  TITLE: 'title', META: 'meta', RUNNING: 'running', LEVELUP: 'levelup', PAUSED: 'paused', GAMEOVER: 'gameover'
-};
+export const GAME_STATE = { TITLE:'title', META:'meta', RUNNING:'running', LEVELUP:'levelup', PAUSED:'paused', GAMEOVER:'gameover' };
