@@ -5,15 +5,25 @@ import { saveGame } from '../core/storage.js';
 const baseRarityWeights = [
   {rarity:'Common',weight:58},{rarity:'Rare',weight:27},{rarity:'Epic',weight:10},{rarity:'Legendary',weight:3.5},{rarity:'Mythic',weight:1.2},{rarity:'Abyssal',weight:.3}
 ];
+export const EQUIPMENT_SETS = {
+  Storm:{name:'嵐', two:'雷・攻撃速度が上昇', four:'連鎖雷+1、射程上昇'},
+  Inferno:{name:'紅蓮', two:'火・爆発ダメージが上昇', four:'撃破時爆発が強化'},
+  Venom:{name:'瘴気', two:'毒ダメージが上昇', four:'毒雲と毒爆発が強化'},
+  Frost:{name:'氷霜', two:'氷・鈍足が強化', four:'定期的に氷晶ノヴァ+1相当'},
+  Guardian:{name:'守護', two:'HPと障壁が上昇', four:'再展開障壁+1'},
+  Legion:{name:'群霊', two:'召喚体が強化', four:'召喚体+1'},
+  Execution:{name:'処刑', two:'低HP敵へのダメージ上昇', four:'処刑波が強化'}
+};
+const setIds=Object.keys(EQUIPMENT_SETS);
 const legendaryEffects = [
-  {id:'stormBook', name:'嵐呼びの魔導書', desc:'通常攻撃時、連鎖雷が発生しやすくなる。'},
-  {id:'emberCore', name:'紅蓮核の首飾り', desc:'敵撃破時、小爆発を起こす。'},
-  {id:'mercyPlate', name:'慈雨の防具', desc:'過剰回復を障壁へ変換する。'},
-  {id:'venomFang', name:'深緑の毒牙', desc:'毒状態の敵が倒れると毒霧爆発。'},
-  {id:'executionCrown', name:'処刑王の指輪', desc:'低HPの敵への処刑ダメージが増える。'},
-  {id:'abyssEngine', name:'深層機関のレリック', desc:'Waveが深いほど追加攻撃が増える。'},
-  {id:'spiritTotem', name:'群霊の召喚具', desc:'召喚体を追加する。'},
-  {id:'mirrorShard', name:'反射王の盾片', desc:'敵弾を一定確率で反射する。'},
+  {id:'stormBook', setId:'Storm', name:'嵐呼びの魔導書', desc:'通常攻撃時、連鎖雷が発生しやすくなる。'},
+  {id:'emberCore', setId:'Inferno', name:'紅蓮核の首飾り', desc:'敵撃破時、小爆発を起こす。'},
+  {id:'mercyPlate', setId:'Guardian', name:'慈雨の防具', desc:'過剰回復を障壁へ変換する。'},
+  {id:'venomFang', setId:'Venom', name:'深緑の毒牙', desc:'毒状態の敵が倒れると毒霧爆発。'},
+  {id:'executionCrown', setId:'Execution', name:'処刑王の指輪', desc:'低HPの敵への処刑ダメージが増える。'},
+  {id:'abyssEngine', setId:'Execution', name:'深層機関のレリック', desc:'Waveが深いほど追加攻撃が増える。'},
+  {id:'spiritTotem', setId:'Legion', name:'群霊の召喚具', desc:'召喚体を追加する。'},
+  {id:'mirrorShard', setId:'Guardian', name:'反射王の盾片', desc:'敵弾を一定確率で反射する。'},
 ];
 const names = {
   武器:['錆びた剣','自動弩','破砕杖','裂空刃'], 防具:['旅人の外套','硬化鎧','障壁衣','深層甲殻'], 指輪:['青銅の指輪','会心環','処刑環','星見の輪'],
@@ -39,11 +49,12 @@ export function rollEquipment(wave, luck=0){
     const v = +(base * rarityMult * (1+wave*.04) * (0.75+Math.random()*.55)).toFixed(4);
     stats[key]=(stats[key]||0)+v; statLines.push(`${label}+${formatStat(key,v)}`);
   }
-  let legendaryId=null, legendaryDesc=''; let baseName=pick(names[slot] || [slot]);
+  let legendaryId=null, legendaryDesc='', setId=null; let baseName=pick(names[slot] || [slot]);
   if(['Legendary','Mythic','Abyssal'].includes(rarity)){
-    const leg=pick(legendaryEffects); legendaryId=leg.id; legendaryDesc=leg.desc; baseName=leg.name;
+    const leg=pick(legendaryEffects); legendaryId=leg.id; legendaryDesc=leg.desc; setId=leg.setId; baseName=leg.name;
   }
-  return { id:`eq_${Date.now()}_${Math.random().toString(36).slice(2)}`, slot, rarity, power, stats, statLines, legendaryId, legendaryDesc, name:`${rarity} ${baseName}`, waveFound:wave };
+  if(!setId && (RARITIES[rarity].order||0)>=2) setId=pick(setIds);
+  return { id:`eq_${Date.now()}_${Math.random().toString(36).slice(2)}`, slot, rarity, power, stats, statLines, legendaryId, legendaryDesc, setId, locked:false, name:`${rarity} ${baseName}`, waveFound:wave };
 }
 export function formatStat(key,v){
   if(['damageMult','attackSpeedMult','speedMult','guard','critChance','stoneGain','dropRate','rarityLuck','xpGain','elemental'].includes(key)) return `${Math.round(v*100)}%`;
@@ -59,7 +70,9 @@ export function addEquipment(save, item){
   saveGame(save);
   return equipped;
 }
-export function itemScore(item){ return (item?.power || 0) + (item?.legendaryId?500:0) + (RARITIES[item?.rarity]?.order || 0)*35; }
+export function itemScore(item){ return (item?.power || 0) + (item?.legendaryId?500:0) + (RARITIES[item?.rarity]?.order || 0)*35 + (item?.setId?18:0); }
+export function setCounts(equipment){ const out={}; for(const it of Object.values(equipment||{})){ if(it?.setId) out[it.setId]=(out[it.setId]||0)+1; } return out; }
+export function toggleLock(save,itemId){ const item=save.inventory.find(x=>x.id===itemId); if(!item)return false; item.locked=!item.locked; saveGame(save); return item.locked; }
 
 export function equipItem(save, itemId){
   const item = save.inventory.find(x=>x.id===itemId);
@@ -75,6 +88,7 @@ export function dismantleItem(save, itemId){
   const order=RARITIES[item.rarity]?.order || 1;
   const gained=Math.max(1, Math.floor((item.power||1)*order*.18));
   save.inventory.splice(idx,1);
+  if(item.locked) return 0;
   if(save.equipment[item.slot]?.id===itemId) save.equipment[item.slot]=null;
   save.abyssStones+=gained;
   save.lifetimeStones=(save.lifetimeStones||0)+gained;
