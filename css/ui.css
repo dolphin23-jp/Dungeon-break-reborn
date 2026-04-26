@@ -16,3 +16,7 @@
 .btn.enhance-one{min-width:90px}
 .depth-select .depth-card{min-height:74px}
 .inventory-item{border-width:2px}
+.automation-grid{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:10px}
+.automation-grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#cbd8ef}
+.automation-grid select{min-height:42px;border-radius:10px;background:#07101f;color:var(--text);border:1px solid rgba(255,255,255,.16);padding:8px 10px;font-size:14px}
+@media(max-width:900px){.automation-grid{grid-template-columns:1fr}}
