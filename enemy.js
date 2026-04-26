@@ -4,13 +4,13 @@ import { clamp, normalize, rand, randInt } from '../core/utils.js';
 import { Projectile } from './projectile.js';
 
 export class Enemy{
-  constructor(typeId, wave, x, y){
+  constructor(typeId, wave, x, y, depth={enemyHp:1, enemyAtk:1}){
     const t = ENEMY_TYPES[typeId] || ENEMY_TYPES.grunt;
     const hpScale = Math.pow(1.18, wave-1);
     const atkScale = Math.pow(1.14, wave-1);
     this.typeId=typeId; this.name=t.name; this.x=x; this.y=y; this.r=t.radius; this.color=t.color;
-    this.maxHp=t.hp*hpScale*(t.boss?1+wave*0.22:1)*(t.elite?1+wave*0.035:1); this.hp=this.maxHp;
-    this.speed=t.speed*(1+wave*0.014); this.damage=t.damage*atkScale; this.xp=t.xp*Math.pow(1.1,wave-1);
+    this.maxHp=t.hp*hpScale*depth.enemyHp*(t.boss?1+wave*0.22:1)*(t.elite?1+wave*0.035:1); this.hp=this.maxHp;
+    this.speed=t.speed*(1+wave*0.014); this.damage=t.damage*atkScale*depth.enemyAtk; this.xp=t.xp*Math.pow(1.1,wave-1);
     this.score=t.score; this.flags=t;
     this.cd=rand(0,1.4); this.shootCd=rand(.4,2.2); this.specialCd=rand(1.2,3.5); this.summonCd=rand(3,5);
     this.slow=0; this.poison=0; this.poisonDps=0; this.bleed=0; this.bleedDps=0;
@@ -76,7 +76,7 @@ export class Enemy{
   }
   trySummon(dt, game){
     this.summonCd-=dt;
-    if(this.summonCd>0 || game.enemies.length>CONFIG.wave.maxEnemiesBase+game.wave*8) return;
+    if(this.summonCd>0 || game.enemies.length>Math.floor((CONFIG.wave.maxEnemiesBase+game.wave*8)*(game.depth?.enemyCount||1))) return;
     this.summonCd=4.8;
     for(let i=0;i<2;i++){ game.waveSystem.spawnEnemy('grunt', this.x+rand(-28,28), this.y+rand(-28,28)); }
     game.effects.push({type:'circle',x:this.x,y:this.y,r:48,life:.25,color:'#c289ff'});

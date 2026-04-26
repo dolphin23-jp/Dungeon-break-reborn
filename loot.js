@@ -60,3 +60,24 @@ export function addEquipment(save, item){
   return equipped;
 }
 export function itemScore(item){ return (item?.power || 0) + (item?.legendaryId?500:0) + (RARITIES[item?.rarity]?.order || 0)*35; }
+
+export function equipItem(save, itemId){
+  const item = save.inventory.find(x=>x.id===itemId);
+  if(!item) return false;
+  save.equipment[item.slot]=item;
+  saveGame(save);
+  return true;
+}
+export function dismantleItem(save, itemId){
+  const idx=save.inventory.findIndex(x=>x.id===itemId);
+  if(idx<0) return 0;
+  const item=save.inventory[idx];
+  const order=RARITIES[item.rarity]?.order || 1;
+  const gained=Math.max(1, Math.floor((item.power||1)*order*.18));
+  save.inventory.splice(idx,1);
+  if(save.equipment[item.slot]?.id===itemId) save.equipment[item.slot]=null;
+  save.abyssStones+=gained;
+  save.lifetimeStones=(save.lifetimeStones||0)+gained;
+  saveGame(save);
+  return gained;
+}

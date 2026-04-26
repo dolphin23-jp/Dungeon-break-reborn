@@ -6,21 +6,46 @@ export function defaultSave(){
   for (const u of UPGRADE_DEFS) upgrades[u.id] = 0;
   const equipment = {};
   for (const slot of EQUIPMENT_SLOTS) equipment[slot] = null;
-  return { version:2, abyssStones:0, bestWave:0, totalRuns:0, achievements:{}, upgrades, equipment, inventory:[] };
+  return {
+    version:3,
+    abyssStones:0,
+    bestWave:0,
+    totalRuns:0,
+    totalKills:0,
+    totalBossKills:0,
+    lifetimeStones:0,
+    legendaryFound:0,
+    maxDepthStarted:1,
+    achievements:{},
+    upgrades,
+    equipment,
+    inventory:[],
+    settings:{ selectedDepth:1 }
+  };
+}
+export function normalizeSave(parsed={}){
+  const base = defaultSave();
+  return {
+    ...base,
+    ...parsed,
+    version:3,
+    upgrades:{ ...base.upgrades, ...(parsed.upgrades || {}) },
+    achievements:{ ...(parsed.achievements || {}) },
+    equipment:{ ...base.equipment, ...(parsed.equipment || {}) },
+    inventory:Array.isArray(parsed.inventory) ? parsed.inventory.slice(0, CONFIG.inventory.maxItems) : [],
+    settings:{ ...base.settings, ...(parsed.settings || {}) }
+  };
 }
 export function loadSave(){
   try{
     const raw = localStorage.getItem(CONFIG.storageKey);
-    const legacy = localStorage.getItem('dungeonBreakReborn.phase1.save');
-    const parsed = raw ? JSON.parse(raw) : legacy ? JSON.parse(legacy) : {};
-    const base = defaultSave();
-    const save = { ...base, ...parsed, version: 2 };
-    save.upgrades = { ...base.upgrades, ...(parsed.upgrades || {}) };
-    save.achievements = { ...(parsed.achievements || {}) };
-    save.equipment = { ...base.equipment, ...(parsed.equipment || {}) };
-    save.inventory = Array.isArray(parsed.inventory) ? parsed.inventory.slice(0, CONFIG.inventory.maxItems) : [];
-    return save;
+    const legacy2 = localStorage.getItem('dungeonBreakReborn.phase2.save');
+    const legacy1 = localStorage.getItem('dungeonBreakReborn.phase1.save');
+    const parsed = raw ? JSON.parse(raw) : legacy2 ? JSON.parse(legacy2) : legacy1 ? JSON.parse(legacy1) : {};
+    return normalizeSave(parsed);
   }catch(e){ console.warn('Save load failed', e); return defaultSave(); }
 }
 export function saveGame(save){ localStorage.setItem(CONFIG.storageKey, JSON.stringify(save)); }
-export function addStones(save, amount){ save.abyssStones = Math.max(0, Math.floor(save.abyssStones + amount)); saveGame(save); }
+export function addStones(save, amount){ save.abyssStones = Math.max(0, Math.floor(save.abyssStones + amount)); save.lifetimeStones = Math.max(save.lifetimeStones||0, (save.lifetimeStones||0) + Math.max(0, Math.floor(amount))); saveGame(save); }
+export function exportSave(save){ return btoa(unescape(encodeURIComponent(JSON.stringify(save)))); }
+export function importSave(text){ return normalizeSave(JSON.parse(decodeURIComponent(escape(atob(text.trim()))))); }

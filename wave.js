@@ -8,9 +8,9 @@ export class WaveSystem{
   update(dt){
     this.timer-=dt; this.spawnTimer-=dt;
     const wave=this.game.wave;
-    const maxEnemies=CONFIG.wave.maxEnemiesBase+wave*8;
+    const maxEnemies=Math.floor((CONFIG.wave.maxEnemiesBase+wave*8) * this.game.depth.enemyCount);
     if(this.timer>0 && this.spawnTimer<=0 && this.game.enemies.length<maxEnemies){
-      this.spawnTimer=Math.max(.055,.72-wave*.026);
+      this.spawnTimer=Math.max(.045,.72-wave*.026) / Math.sqrt(this.game.depth.enemyCount);
       const count=wave>10?randInt(3,6):wave>5?randInt(2,4):wave>2?randInt(1,3):1;
       for(let i=0;i<count;i++)this.spawnEnemy(this.pickType(wave));
     }
@@ -27,6 +27,6 @@ export class WaveSystem{
       const side=randInt(0,3);
       if(side===0){x=rand(0,CONFIG.arena.width);y=-pad}else if(side===1){x=CONFIG.arena.width+pad;y=rand(0,CONFIG.arena.height)}else if(side===2){x=rand(0,CONFIG.arena.width);y=CONFIG.arena.height+pad}else{x=-pad;y=rand(0,CONFIG.arena.height)}
     }
-    this.game.enemies.push(new Enemy(type,this.game.wave,x,y));
+    this.game.enemies.push(new Enemy(type,this.game.wave,x,y,this.game.depth));
   }
 }
