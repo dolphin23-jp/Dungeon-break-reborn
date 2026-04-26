@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070b12" />
+  <title>DUNGEON BREAK REBORN — Phase 1</title>
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/ui.css" />
+  <link rel="stylesheet" href="css/game.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <section id="titleScreen" class="screen screen-title active">
+      <div class="title-panel glass">
+        <p class="eyebrow">ROGUELITE AUTO BATTLE ACTION</p>
+        <h1>DUNGEON BREAK<br><span>REBORN</span></h1>
+        <p class="lead">
+          固定アリーナで移動しながら大量の敵を倒す、ローグライト・オートバトルアクション。
+          攻撃とスキルは自動。移動は手動とオートを切替可能。
+        </p>
+        <div class="title-actions">
+          <button id="startRunBtn" class="btn primary">探索開始</button>
+          <button id="openMetaBtn" class="btn">永続強化</button>
+          <button id="openHelpBtn" class="btn ghost">操作説明</button>
+        </div>
+        <div class="save-row">
+          <span>深淵石</span><strong id="titleAbyssStones">0</strong>
+          <span>最高Wave</span><strong id="titleBestWave">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen screen-game">
+      <header class="topbar glass">
+        <div class="brand">DBR <span>Phase 1</span></div>
+        <div class="hud-grid">
+          <div class="hud-item"><span>Wave</span><strong id="hudWave">1</strong></div>
+          <div class="hud-item"><span>Lv</span><strong id="hudLevel">1</strong></div>
+          <div class="hud-item"><span>深淵石</span><strong id="hudStones">0</strong></div>
+          <div class="hud-item"><span>敵</span><strong id="hudEnemies">0</strong></div>
+        </div>
+        <div class="top-actions">
+          <button id="toggleAutoBtn" class="btn small">移動: 手動</button>
+          <button id="pauseBtn" class="btn small ghost">一時停止</button>
+        </div>
+      </header>
+
+      <main class="game-layout">
+        <div class="arena-wrap glass">
+          <canvas id="gameCanvas" width="960" height="620" aria-label="DUNGEON BREAK REBORN Arena"></canvas>
+          <div id="floatingTextLayer" class="floating-layer"></div>
+          <div id="mobileStick" class="mobile-stick">
+            <div class="stick-base"><div class="stick-knob"></div></div>
+          </div>
+        </div>
+
+        <aside class="side-panel glass">
+          <div class="bar-block">
+            <div class="bar-label"><span>HP</span><strong id="hpText">100/100</strong></div>
+            <div class="bar"><div id="hpBar" class="bar-fill hp"></div></div>
+          </div>
+          <div class="bar-block">
+            <div class="bar-label"><span>EXP</span><strong id="xpText">0/10</strong></div>
+            <div class="bar"><div id="xpBar" class="bar-fill xp"></div></div>
+          </div>
+          <div class="stats-box">
+            <h3>現在ステータス</h3>
+            <div id="runStats" class="stat-list"></div>
+          </div>
+          <div class="log-box">
+            <h3>戦闘ログ</h3>
+            <div id="battleLog" class="log-list"></div>
+          </div>
+        </aside>
+      </main>
+    </section>
+
+    <section id="metaScreen" class="screen screen-meta">
+      <div class="meta-panel glass">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">PERMANENT GROWTH</p>
+            <h2>永続強化</h2>
+          </div>
+          <button id="backTitleFromMetaBtn" class="btn ghost">タイトルへ</button>
+        </div>
+        <div class="meta-summary">
+          <div><span>所持 深淵石</span><strong id="metaStones">0</strong></div>
+          <div><span>強化合計Lv</span><strong id="metaTotalLv">0</strong></div>
+        </div>
+        <div class="bulk-controls">
+          <button class="btn small bulk-mode active" data-mode="1">+1</button>
+          <button class="btn small bulk-mode" data-mode="10">+10</button>
+          <button class="btn small bulk-mode" data-mode="100">+100</button>
+          <button class="btn small bulk-mode" data-mode="max">最大まで</button>
+          <button id="upgradeCategoryBtn" class="btn small">カテゴリ一括</button>
+          <button id="upgradeBalancedBtn" class="btn small">全体均等</button>
+          <button id="debugAddStonesBtn" class="btn small danger">Debug +100,000</button>
+        </div>
+        <div id="upgradeList" class="upgrade-list"></div>
+      </div>
+    </section>
+
+    <div id="modalLayer" class="modal-layer"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
