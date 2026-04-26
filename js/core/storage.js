@@ -7,7 +7,7 @@ export function defaultSave(){
   const equipment = {};
   for (const slot of EQUIPMENT_SLOTS) equipment[slot] = null;
   return {
-    version:3,
+    version:5,
     abyssStones:0,
     bestWave:0,
     totalRuns:0,
@@ -20,7 +20,7 @@ export function defaultSave(){
     upgrades,
     equipment,
     inventory:[],
-    settings:{ selectedDepth:1 }
+    settings:{ selectedDepth:1, autoDismantleRarity:'None' }
   };
 }
 export function normalizeSave(parsed={}){
@@ -28,7 +28,7 @@ export function normalizeSave(parsed={}){
   return {
     ...base,
     ...parsed,
-    version:3,
+    version:5,
     upgrades:{ ...base.upgrades, ...(parsed.upgrades || {}) },
     achievements:{ ...(parsed.achievements || {}) },
     equipment:{ ...base.equipment, ...(parsed.equipment || {}) },
@@ -39,9 +39,11 @@ export function normalizeSave(parsed={}){
 export function loadSave(){
   try{
     const raw = localStorage.getItem(CONFIG.storageKey);
+    const legacy4 = localStorage.getItem('dungeonBreakReborn.phase4.save');
+    const legacy3 = localStorage.getItem('dungeonBreakReborn.phase3.save');
     const legacy2 = localStorage.getItem('dungeonBreakReborn.phase2.save');
     const legacy1 = localStorage.getItem('dungeonBreakReborn.phase1.save');
-    const parsed = raw ? JSON.parse(raw) : legacy2 ? JSON.parse(legacy2) : legacy1 ? JSON.parse(legacy1) : {};
+    const parsed = raw ? JSON.parse(raw) : legacy4 ? JSON.parse(legacy4) : legacy3 ? JSON.parse(legacy3) : legacy2 ? JSON.parse(legacy2) : legacy1 ? JSON.parse(legacy1) : {};
     return normalizeSave(parsed);
   }catch(e){ console.warn('Save load failed', e); return defaultSave(); }
 }
