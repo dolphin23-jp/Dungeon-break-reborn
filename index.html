@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#070b12" />
-  <title>DUNGEON BREAK REBORN — Phase 5</title>
+  <title>DUNGEON BREAK REBORN — Phase 6</title>
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/ui.css" />
@@ -30,6 +30,7 @@
           <button id="openHelpBtn" class="btn ghost">操作説明</button>
         </div>
         <div class="depth-block"><div class="depth-heading"><span>選択深度</span><strong id="titleDepthName">深度 I</strong></div><div id="depthSelect" class="depth-select"></div></div>
+        <div class="depth-block"><div class="depth-heading"><span>出撃キャラクター</span><strong id="titleCharacterName">灰刃の放浪者</strong></div><div id="characterSelect" class="depth-select"></div><div id="selectedCharacterInfo" class="achievement-card"></div></div>
         <div class="save-row">
           <span>深淵石</span><strong id="titleAbyssStones">0</strong>
           <span>最高Wave</span><strong id="titleBestWave">0</strong>
@@ -39,7 +40,7 @@
 
     <section id="gameScreen" class="screen screen-game">
       <header class="topbar glass">
-        <div class="brand">DBR <span>Phase 5</span></div>
+        <div class="brand">DBR <span>Phase 6</span></div>
         <div class="hud-grid">
           <div class="hud-item"><span>Wave</span><strong id="hudWave">1</strong></div>
           <div class="hud-item"><span>Lv</span><strong id="hudLevel">1</strong></div>
@@ -49,7 +50,7 @@
         <div class="top-actions">
           <button id="toggleAutoBtn" class="btn small">移動: 手動</button>
           <button id="openBuildBtn" class="btn small ghost">ビルド</button>
-          <button id="pauseBtn" class="btn small ghost">一時停止</button>
+          <button id="speedBtn" class="btn small">速度 <span id="speedLabel">1x</span></button><button id="retreatBtn" class="btn small">帰還</button><button id="pauseBtn" class="btn small ghost">一時停止</button>
         </div>
       </header>
 

@@ -10,12 +10,12 @@ export class CombatSystem{
     if(p.attackTimer<=0){
       const waveBonus = p.flags.waveAttacks ? Math.min(4 + p.flags.waveAttacks, Math.floor(this.game.wave/5)*p.flags.waveAttacks) : 0;
       const skillBonus = p.flags.multiShot || 0;
-      p.attackTimer = 1/Math.max(.1,p.attackSpeed);
+      p.attackTimer = 1/Math.max(.1,p.attackSpeed)*(1-p.cooldownReduction);
       this.fireBasic(1+waveBonus+skillBonus);
     }
     if(p.flags.fireAura && p.auraTimer<=0){ p.auraTimer=Math.max(.16,.48-.025*p.flags.fireAura); this.fireAura(); }
     if(p.flags.storm && p.stormTimer<=0){ p.stormTimer=Math.max(.45,1.35-.08*p.flags.storm); this.storm(); }
-    if(p.flags.minions && p.minionTimer<=0){ p.minionTimer=.75/Math.max(1,p.flags.minions+(p.flags.minionSwarm||0)); this.minionShot(); }
+    if(p.flags.minions && p.minionTimer<=0){ p.minionTimer=.75/Math.max(1,(p.flags.minions||0)+(p.flags.minionSwarm||0))*Math.max(.45,1-p.summonAttackSpeed*0.2); this.minionShot(); }
     if(p.flags.frostNova && p.frostTimer<=0){ p.frostTimer=Math.max(1.2,3.6-.18*p.flags.frostNova); this.frostNova(); }
     if(p.flags.bladeOrbit && p.bladeTimer<=0){ p.bladeTimer=Math.max(.16,.58-.035*p.flags.bladeOrbit); this.bladeOrbit(); }
     if(p.flags.blackHole && p.blackHoleTimer<=0){ p.blackHoleTimer=Math.max(2.0,6.4-.38*p.flags.blackHole); this.blackHole(); }
@@ -45,7 +45,7 @@ export class CombatSystem{
   }
   minionShot(){
     const target=this.findNearest(480); if(!target)return; const angle=Math.random()*Math.PI*2; const x=this.game.player.x+Math.cos(angle)*34; const y=this.game.player.y+Math.sin(angle)*34;
-    this.game.projectiles.push(new Projectile(x,y,target,this.calcDamage(target,.55+this.game.player.elemental*.25+0.04*(this.game.player.flags.minions||0)),{color:'#c289ff',speed:620,r:4,pierce:Math.floor((this.game.player.flags.minionSwarm||0)/2)+(this.game.player.flags.spiritCitadel?1:0)})); if(this.game.player.flags.spiritCitadel){ this.game.player.shield=Math.min(this.game.player.maxHp*1.8,this.game.player.shield+this.game.player.maxHp*.01); }
+    this.game.projectiles.push(new Projectile(x,y,target,this.calcDamage(target,(.55+this.game.player.elemental*.25+0.04*(this.game.player.flags.minions||0))*this.game.player.summonDamage),{color:'#c289ff',speed:620,r:4,pierce:Math.floor((this.game.player.flags.minionSwarm||0)/2)+(this.game.player.flags.spiritCitadel?1:0)})); if(this.game.player.flags.spiritCitadel){ this.game.player.shield=Math.min(this.game.player.maxHp*1.8,this.game.player.shield+this.game.player.maxHp*.01); }
   }
   updateProjectiles(dt){
     const arr=this.game.projectiles;
@@ -56,7 +56,7 @@ export class CombatSystem{
           if(p.flags.reflectBullets && Math.random()<Math.min(.82,0.18*p.flags.reflectBullets)){
             const t=this.findNearest(520, p); if(t){ pr.owner='player'; pr.target=t; pr.color='#69ffe7'; pr.damage*=1.35+.08*p.flags.reflectBullets; continue; }
           }
-          const res=p.takeDamage(pr.damage); if(res.dodged) this.game.floatText(p.x,p.y,'EVADE','#9de8ff'); remove=true;
+          const res=p.takeDamage(pr.damage); if(res.dodged) this.game.floatText(p.x,p.y,'EVADE','#9de8ff'); if(res.undying) this.game.floatText(p.x,p.y,'不屈','#ffd36e'); if(p.flags.thornRevenge) this.explosion(p.x,p.y,80+10*p.flags.thornRevenge,p.damage*(0.35+0.12*p.flags.thornRevenge),'#ff86c8'); remove=true;
         }
       }else{
         for(const e of this.game.enemies){ if(pr.hit.has(e)) continue; const dx=e.x-pr.x,dy=e.y-pr.y; if(dx*dx+dy*dy<(e.r+pr.r)**2){ this.applyHit(e,pr.damage); pr.hit.add(e); if(pr.pierce>0){pr.pierce--; } else {remove=true;} break; } }
@@ -68,9 +68,9 @@ export class CombatSystem{
     const p=this.game.player; if(area) dmg*=1-(e.areaResist||0);
     e.hp-=dmg; this.game.floatText(e.x,e.y,Math.floor(dmg),'#fff');
     if(p.flags.iceSlow && Math.random()>e.statusResist){e.slow=.9+.25*p.flags.iceSlow; this.game.effects.push({type:'circle',x:e.x,y:e.y,r:e.r+6,life:.12,color:'#8ce9ff'}); if(p.flags.frostNova) e.hp-=p.damage*.07*p.flags.frostNova;}
-    if(p.flags.poison && Math.random()>e.statusResist){e.poison=3.2+.12*p.flags.poison+(p.flags.plagueAbyss?.8:0);e.poisonDps=p.damage*(.18+.08*p.flags.poison+(p.flags.plagueAbyss?.08:0))*(1+p.elemental);}
-    if(p.flags.bleed && Math.random()>e.statusResist){e.bleed=2.4+.12*p.flags.bleed;e.bleedDps=p.damage*(.16+.08*p.flags.bleed)*(1+p.elemental);}
-    if(p.flags.burn && Math.random()>e.statusResist){e.burn=2.2+.1*p.flags.burn;e.burnDps=p.damage*(.15+.055*p.flags.burn)*(1+p.elemental);}
+    if(p.flags.poison && Math.random()>e.statusResist){e.poison=(3.2+.12*p.flags.poison+(p.flags.plagueAbyss?.8:0))*p.statusDuration;e.poisonDps=p.damage*(.18+.08*p.flags.poison+(p.flags.plagueAbyss?.08:0))*(1+p.elemental)*p.statusDamage;}
+    if(p.flags.bleed && Math.random()>e.statusResist){e.bleed=(2.4+.12*p.flags.bleed)*p.statusDuration;e.bleedDps=p.damage*(.16+.08*p.flags.bleed)*(1+p.elemental)*p.statusDamage;}
+    if(p.flags.burn && Math.random()>e.statusResist){e.burn=(2.2+.1*p.flags.burn)*p.statusDuration;e.burnDps=p.damage*(.15+.055*p.flags.burn)*(1+p.elemental)*p.statusDamage;}
     if(p.flags.doubleHit && Math.random()<Math.min(.75,0.16*p.flags.doubleHit)){e.hp-=dmg*.55; this.game.floatText(e.x+12,e.y-8,'追撃','#ff86c8');}
     if(p.flags.chainLightning && Math.random()<Math.min(.88,0.18*p.flags.chainLightning)){ this.chain(e,dmg*(.55+p.elemental*.25)); }
     if(p.flags.thunderJudgement && e.hp/e.maxHp<0.28){ this.chain(e,dmg*.75); }
@@ -134,5 +134,5 @@ export class CombatSystem{
       }
     }
   }
-  enemyContact(dt){ const p=this.game.player; for(const e of this.game.enemies){ const dx=e.x-p.x,dy=e.y-p.y,d2=dx*dx+dy*dy; if(d2<(e.r+p.r)**2){ const res=p.takeDamage(e.damage*dt*.9); if(res.dodged) this.game.floatText(p.x,p.y,'EVADE','#9de8ff'); if(p.flags.reflect){ e.hp-=e.damage*dt*2.8*p.flags.reflect; } } } }
+  enemyContact(dt){ const p=this.game.player; for(const e of this.game.enemies){ const dx=e.x-p.x,dy=e.y-p.y,d2=dx*dx+dy*dy; if(d2<(e.r+p.r)**2){ const res=p.takeDamage(e.damage*dt*.9); if(res.dodged) this.game.floatText(p.x,p.y,'EVADE','#9de8ff'); if(p.flags.reflect||p.flags.contactThorns){ e.hp-=e.damage*dt*2.8*((p.flags.reflect||0)+(p.flags.contactThorns||0)); } } } }
 }

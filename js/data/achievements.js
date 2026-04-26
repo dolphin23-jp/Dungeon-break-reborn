@@ -6,6 +6,6 @@ export const ACHIEVEMENTS = [
   { id:'k500', name:'群れを砕く者', desc:'累計500体撃破する', rewardText:'攻撃速度 +2', upgrade:'haste', amount:2, condition:s=>s.totalKills>=500 },
   { id:'boss1', name:'初Boss撃破', desc:'Bossを1体倒す', rewardText:'財宝嗅覚 +1', upgrade:'dropRate', amount:1, condition:s=>s.totalBossKills>=1 },
   { id:'legend1', name:'黄金の鼓動', desc:'Legendary以上の装備を入手する', rewardText:'高レア運 +2', upgrade:'rarityLuck', amount:2, condition:s=>s.legendaryFound>=1 },
-  { id:'depth3', name:'深度III解放者', desc:'深度III以上で探索を開始する', rewardText:'深淵石 +5000', stones:5000, condition:s=>s.maxDepthStarted>=3 },
+  { id:'depth3', name:'深度III解放者', desc:'深度III以上で探索を開始する', rewardText:'深淵石 +15000', stones:15000, condition:s=>s.maxDepthStarted>=3 },
   { id:'stone50k', name:'石喰らい', desc:'累計50,000個の深淵石を獲得する', rewardText:'深淵共鳴 +3', upgrade:'stoneGain', amount:3, condition:s=>s.lifetimeStones>=50000 },
 ];
