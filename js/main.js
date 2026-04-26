@@ -12,6 +12,7 @@ import { CHARACTERS, getCharacterById } from './data/characters.js';
 import { summarizeMasteryRewards, calculateMasteryLevel, masteryExpForLevel } from './data/mastery.js';
 import { DEPTH_MISSIONS } from './data/depthMissions.js';
 import { availableChallenges } from './data/challenges.js';
+import { renderAutomationSettings } from './ui/automationView.js';
 
 class App {
   constructor() {
@@ -23,6 +24,7 @@ class App {
     this.renderDepthSelect();
     this.renderCharacterSelect();
     this.renderChallengeSelect();
+    renderAutomationSettings(this);
   }
   bind() {
     $('#startRunBtn').addEventListener('click', () => this.startRun());
@@ -42,7 +44,7 @@ class App {
   }
   startRun() { showScreen('#gameScreen'); $('#battleLog').innerHTML = ''; this.game = new Game(this, $('#gameCanvas')); $('#toggleAutoBtn').textContent = '移動: 手動'; $('#speedLabel').textContent = '1x'; this.game.start(); }
   toMeta() { showScreen('#metaScreen'); renderMeta(this); }
-  toTitle() { showScreen('#titleScreen'); this.refreshTitle(); this.renderDepthSelect(); this.renderCharacterSelect(); this.renderChallengeSelect(); }
+  toTitle() { showScreen('#titleScreen'); this.refreshTitle(); this.renderDepthSelect(); this.renderCharacterSelect(); this.renderChallengeSelect(); renderAutomationSettings(this); }
   refreshTitle() {
     $('#titleAbyssStones').textContent = format(this.save.abyssStones);
     $('#titleBestWave').textContent = this.save.bestWave || 0;
@@ -119,7 +121,7 @@ class App {
     modal(`<h2>深度ミッション</h2><div class='achievement-list'>${rows}</div><div class="modal-actions"><button id="closeMissionBtn" class="btn primary">閉じる</button></div>`);
     $('#closeMissionBtn').onclick = closeModal;
   }
-  showSaveTools() { modal(`<h2>セーブ管理</h2><textarea id="saveText" class="save-text"></textarea><div class="modal-actions"><button id="exportSaveBtn" class="btn">エクスポート</button><button id="importSaveBtn" class="btn danger">インポート</button><button id="closeSaveBtn" class="btn primary">閉じる</button></div>`); $('#exportSaveBtn').onclick = () => { $('#saveText').value = exportSave(this.save); }; $('#importSaveBtn').onclick = () => { try { this.save = importSave($('#saveText').value); saveGame(this.save); this.refreshTitle(); this.renderDepthSelect(); this.renderCharacterSelect(); this.renderChallengeSelect(); closeModal(); } catch (e) { alert('失敗'); } }; $('#closeSaveBtn').onclick = closeModal; }
-  help() { modal(`<h2>操作説明</h2><div class="help-list"><p>Phase 7: 熟練度/装備affix/装備強化/深度ミッション/チャレンジを追加。</p></div><div class="modal-actions"><button id="closeHelpBtn" class="btn primary">閉じる</button></div>`); $('#closeHelpBtn').onclick = closeModal; }
+  showSaveTools() { modal(`<h2>セーブ管理</h2><textarea id="saveText" class="save-text"></textarea><div class="modal-actions"><button id="exportSaveBtn" class="btn">エクスポート</button><button id="importSaveBtn" class="btn danger">インポート</button><button id="closeSaveBtn" class="btn primary">閉じる</button></div>`); $('#exportSaveBtn').onclick = () => { $('#saveText').value = exportSave(this.save); }; $('#importSaveBtn').onclick = () => { try { this.save = importSave($('#saveText').value); saveGame(this.save); this.refreshTitle(); this.renderDepthSelect(); this.renderCharacterSelect(); this.renderChallengeSelect(); renderAutomationSettings(this); closeModal(); } catch (e) { alert('失敗'); } }; $('#closeSaveBtn').onclick = closeModal; }
+  help() { modal(`<h2>操作説明</h2><div class="help-list"><p>Phase 8: 自動周回設定 / スキル自動選択 / Wave報酬自動化 / 自動帰還 / 軽量化を追加。</p></div><div class="modal-actions"><button id="closeHelpBtn" class="btn primary">閉じる</button></div>`); $('#closeHelpBtn').onclick = closeModal; }
 }
 window.addEventListener('DOMContentLoaded', () => { window.DBR = new App(); });

@@ -1,5 +1,5 @@
 export const CONFIG = {
-  storageKey: 'dungeonBreakReborn.phase7.save',
+  storageKey: 'dungeonBreakReborn.phase8.save',
   arena: { width: 960, height: 620 },
   player: { radius: 16, baseHp: 120, baseSpeed: 250, baseDamage: 13, baseAttackSpeed: 1.18, baseRange: 195 },
   xp: { base: 12, growth: 1.22 },

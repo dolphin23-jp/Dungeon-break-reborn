@@ -21,9 +21,9 @@ export class Renderer{
       const bw=e.r*2, bh=4; c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(e.x-e.r,e.y-e.r-10,bw,bh); c.fillStyle=e.flags.boss?'#ff5d73':e.flags.elite?'#ffd36e':'#76f2aa'; c.fillRect(e.x-e.r,e.y-e.r-10,bw*Math.max(0,e.hp/e.maxHp),bh); c.restore();
     }
   }
-  projectiles(c,game){ for(const p of game.projectiles){ c.fillStyle=p.color; c.beginPath(); c.arc(p.x,p.y,p.r,0,Math.PI*2); c.fill(); } }
-  pickups(c,game){ for(const xp of game.pickups){ c.fillStyle=xp.kind==='stone'?'#ffd36e':'#76f2aa'; c.beginPath(); c.arc(xp.x,xp.y,xp.r,0,Math.PI*2); c.fill(); } }
+  projectiles(c,game){ const arr=game.projectiles.length>260?game.projectiles.slice(-260):game.projectiles; for(const p of arr){ c.fillStyle=p.color; c.beginPath(); c.arc(p.x,p.y,p.r,0,Math.PI*2); c.fill(); } }
+  pickups(c,game){ const arr=game.pickups.length>150?game.pickups.slice(-150):game.pickups; for(const xp of arr){ c.fillStyle=xp.kind==='stone'?'#ffd36e':'#76f2aa'; c.beginPath(); c.arc(xp.x,xp.y,xp.r,0,Math.PI*2); c.fill(); } }
   hazards(c,game){ for(const h of game.hazards||[]){ c.save(); c.globalAlpha=.28+Math.max(0,h.timer)*.18; c.fillStyle=h.color || '#ff5d73'; c.beginPath(); c.arc(h.x,h.y,h.r,0,Math.PI*2); c.fill(); c.globalAlpha=.9; c.strokeStyle=h.color || '#ff5d73'; c.lineWidth=3; c.setLineDash([8,6]); c.beginPath(); c.arc(h.x,h.y,h.r,0,Math.PI*2); c.stroke(); c.restore(); } }
-  effects(c,game){ for(const fx of game.effects){ c.save(); c.globalAlpha=Math.max(0,fx.life/(fx.type==='telegraph'?0.82:0.25)); c.strokeStyle=fx.color; c.fillStyle=fx.color; c.lineWidth=3; if(fx.type==='line'){c.beginPath();c.moveTo(fx.x1,fx.y1);c.lineTo(fx.x2,fx.y2);c.stroke()} if(fx.type==='circle'||fx.type==='telegraph'){if(fx.type==='telegraph'){c.setLineDash([10,6]);c.globalAlpha=.7;} c.beginPath();c.arc(fx.x,fx.y,fx.r,0,Math.PI*2);c.stroke()} c.restore(); } }
+  effects(c,game){ const arr=game.effects.length>140?game.effects.slice(-140):game.effects; for(const fx of arr){ c.save(); c.globalAlpha=Math.max(0,fx.life/(fx.type==='telegraph'?0.82:0.25)); c.strokeStyle=fx.color; c.fillStyle=fx.color; c.lineWidth=3; if(fx.type==='line'){c.beginPath();c.moveTo(fx.x1,fx.y1);c.lineTo(fx.x2,fx.y2);c.stroke()} if(fx.type==='circle'||fx.type==='telegraph'){if(fx.type==='telegraph'){c.setLineDash([10,6]);c.globalAlpha=.7;} c.beginPath();c.arc(fx.x,fx.y,fx.r,0,Math.PI*2);c.stroke()} c.restore(); } }
   overlay(c,game){ if(game.autoMove){ c.fillStyle='rgba(103,212,255,.9)'; c.font='700 13px sans-serif'; c.fillText('AUTO MOVE',16,24); } }
 }
