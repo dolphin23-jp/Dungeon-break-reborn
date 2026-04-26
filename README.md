@@ -1,47 +1,106 @@
-# DUNGEON BREAK REBORN — Phase 1
+# DUNGEON BREAK REBORN — Phase 2
 
-ブラウザで遊べるローグライト・オートバトルアクションの新規プロジェクトです。GitHub Pagesへこのフォルダをそのまま配置して動作します。
+ブラウザで遊べるローグライト・オートバトルアクションゲームです。GitHub Pagesで公開できる静的Web構成です。
 
-## 実装済み
-
-- 複数ファイル構成
-- タイトル画面
-- 戦闘画面
-- 固定アリーナ
-- 手動移動 / オート移動切替
-- 複数敵出現
-- 自動攻撃
-- 経験値、レベルアップ、スキル選択
-- Wave進行
-- Boss簡易実装
-- ゲームオーバー
-- 深淵石
-- 永続強化
-- +1 / +10 / +100 / 最大まで / カテゴリ一括 / 全体均等強化
-- デバッグ用 深淵石 +100,000
-- localStorage保存
-- assets/images, assets/audio の将来拡張用フォルダ
-
-## 起動方法
-
-ローカルではブラウザのES Modules制約があるため、簡易サーバーで起動してください。
+## 実行方法
 
 ```bash
-cd dungeon-break-reborn
 python3 -m http.server 8000
 ```
 
-その後、`http://localhost:8000` を開きます。
+その後、ブラウザで `http://localhost:8000` を開きます。
 
-GitHub Pagesではリポジトリ直下、またはdocs配下に配置して公開してください。
+GitHub Pagesでは、このフォルダの中身をリポジトリ直下に置いて公開してください。
 
-## 設計メモ
+## Phase 2で追加した主な内容
 
-- `js/core` : ゲーム本体、保存、定数、ユーティリティ
-- `js/entities` : Player / Enemy / Projectile
-- `js/systems` : 戦闘、Wave、入力、Loot
-- `js/data` : スキル、敵、永続強化などのデータ定義
-- `js/ui` : DOM操作、描画、永続強化画面
-- `assets` : 将来的な画像・BGM・SE格納場所
+- 敵タイプの役割強化
+  - 雑魚
+  - 突進敵
+  - 遠距離敵
+  - タンク敵
+  - 爆発敵
+  - 回復敵
+  - バッファー
+  - 召喚敵
+  - エリート
+  - Boss
+- 敵弾の追加
+- Bossの範囲予兆攻撃
+- 爆発敵の予兆付き爆発
+- 敵のクリティカル耐性、状態異常耐性、範囲耐性
+- 属性スキル強化
+  - 連鎖雷
+  - 火炎円環
+  - 火爆発
+  - 氷鈍足
+  - 毒DoT
+  - 毒爆発
+  - 出血
+  - 障壁再展開
+  - 敵弾反射
+  - 召喚体
+- 装備ドロップ実装
+- 9装備スロット実装
+- 装備レアリティ実装
+- 自動装備更新
+- Legendary以上の固有効果実装
+- 永続強化項目の拡張
+- 実績報酬による永続強化レベル直接上昇
 
-Phase 2以降では、装備管理画面、Legendary固有効果の本格実装、敵弾、召喚体、実績一覧、セーブエクスポート/インポートを追加しやすい構成にしています。
+## ディレクトリ構成
+
+```text
+dungeon-break-reborn/
+├── index.html
+├── README.md
+├── css/
+│   ├── base.css
+│   ├── layout.css
+│   ├── ui.css
+│   └── game.css
+├── js/
+│   ├── main.js
+│   ├── core/
+│   │   ├── constants.js
+│   │   ├── game.js
+│   │   ├── storage.js
+│   │   └── utils.js
+│   ├── data/
+│   │   ├── enemies.js
+│   │   ├── skills.js
+│   │   └── upgrades.js
+│   ├── entities/
+│   │   ├── enemy.js
+│   │   ├── player.js
+│   │   └── projectile.js
+│   ├── systems/
+│   │   ├── combat.js
+│   │   ├── input.js
+│   │   ├── loot.js
+│   │   └── wave.js
+│   └── ui/
+│       ├── dom.js
+│       ├── metaView.js
+│       └── renderer.js
+└── assets/
+    ├── images/
+    └── audio/
+```
+
+## 操作
+
+- PC: WASD / 矢印キーで移動
+- iPad / スマホ: 左下の仮想スティックで移動
+- Mキーまたは画面上部ボタンで手動移動 / オート移動を切り替え
+- 攻撃・スキル発動は自動
+
+## 保存
+
+`localStorage` に保存します。Phase 2の保存キーは以下です。
+
+```text
+dungeonBreakReborn.phase2.save
+```
+
+Phase 1の保存データがある場合は初回読み込み時に一部引き継ぎます。
