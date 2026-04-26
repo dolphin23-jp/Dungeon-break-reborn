@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#070b12" />
-  <title>DUNGEON BREAK REBORN — Phase 6</title>
+  <title>DUNGEON BREAK REBORN — Phase 7</title>
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/ui.css" />
@@ -26,11 +26,13 @@
           <button id="openInventoryBtn" class="btn">装備管理</button>
           <button id="openAchievementsBtn" class="btn">実績</button>
           <button id="openCodexBtn" class="btn ghost">図鑑/進化</button>
+          <button id="openMissionsBtn" class="btn">ミッション</button>
           <button id="openSaveBtn" class="btn ghost">セーブ管理</button>
           <button id="openHelpBtn" class="btn ghost">操作説明</button>
         </div>
         <div class="depth-block"><div class="depth-heading"><span>選択深度</span><strong id="titleDepthName">深度 I</strong></div><div id="depthSelect" class="depth-select"></div></div>
         <div class="depth-block"><div class="depth-heading"><span>出撃キャラクター</span><strong id="titleCharacterName">灰刃の放浪者</strong></div><div id="characterSelect" class="depth-select"></div><div id="selectedCharacterInfo" class="achievement-card"></div></div>
+                <div class="depth-block"><div class="depth-heading"><span>チャレンジ</span><strong id="titleChallengeName">なし</strong></div><div id="challengeSelect" class="depth-select"></div></div>
         <div class="save-row">
           <span>深淵石</span><strong id="titleAbyssStones">0</strong>
           <span>最高Wave</span><strong id="titleBestWave">0</strong>
@@ -40,7 +42,7 @@
 
     <section id="gameScreen" class="screen screen-game">
       <header class="topbar glass">
-        <div class="brand">DBR <span>Phase 6</span></div>
+        <div class="brand">DBR <span>Phase 7</span></div>
         <div class="hud-grid">
           <div class="hud-item"><span>Wave</span><strong id="hudWave">1</strong></div>
           <div class="hud-item"><span>Lv</span><strong id="hudLevel">1</strong></div>

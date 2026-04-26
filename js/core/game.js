@@ -11,6 +11,9 @@ import { $, modal, closeModal } from '../ui/dom.js';
 import { SKILL_POOL, SKILL_RARITY_WEIGHTS, getSkillLevel, isSkillMastered, describeNextSkillLevel, applySkillLevel } from '../data/skills.js';
 import { saveGame } from './storage.js';
 import { rollEquipment, addEquipment } from '../systems/loot.js';
+import { evaluateDepthMissions, applyMissionRewards } from '../data/depthMissions.js';
+import { getChallengeById } from '../data/challenges.js';
+import { calcMasteryExpGain, calculateMasteryLevel, getUnlockedMasteryRewards, getMasteryBonuses } from '../data/mastery.js';
 import { EVOLUTIONS, unlockedEvolutions } from '../data/evolutions.js';
 import { getCharacterById } from '../data/characters.js';
 
@@ -23,23 +26,34 @@ export class Game{
   start(){
     this.depth=getDepth(this.save.settings?.selectedDepth || 1);
     this.selectedCharacter=getCharacterById(this.save.settings?.selectedCharacter);
+    this.selectedChallenge=getChallengeById(this.save.settings?.selectedChallenge || 'none');
+    this.challengeModifiers={ rewardMultiplier:this.selectedChallenge.rewardMultiplier||1, ...(this.selectedChallenge.modifiers||{}) };
+    this.characterMastery=this.save.characterMastery?.[this.selectedCharacter.id] || { masteryLevel:1, masteryExp:0, unlockedMasteryRewards:[] };
+    this.masteryBonuses=getMasteryBonuses(this.characterMastery);
     this.save.characterStats[this.selectedCharacter.id]=this.save.characterStats[this.selectedCharacter.id]||{runs:0,bestWave:0,bestDepth:1};
     this.save.characterStats[this.selectedCharacter.id].runs++;
     this.save.maxDepthStarted=Math.max(this.save.maxDepthStarted||1,this.depth.id);
     saveGame(this.save);
     this.player=new Player(this.save, this.selectedCharacter);
-    this.enemies=[]; this.projectiles=[]; this.pickups=[]; this.effects=[]; this.hazards=[]; this.wave=1; this.runStones=0; this.kills=0; this.bossKillsThisRun=0; this.runSkills=[]; this.runSkillLevels={}; this.runEvolutions={}; this.runDrops=[]; this.autoMove=false; this.pendingLevelUps=0; this.levelGrowthQueue=[]; this.state=GAME_STATE.RUNNING; this.runResult='gameover';
+    this.player.healingMultiplier=this.challengeModifiers.healingMultiplier||1;
+    this.enemies=[]; this.projectiles=[]; this.pickups=[]; this.effects=[]; this.hazards=[]; this.wave=1; this.runStones=0; this.kills=0; this.bossKillsThisRun=0; this.runSkills=[]; this.autoDismantledCount=0; this.autoDismantledStones=0; this.runMissionRewards={stones:0,masteryExp:0}; this.runMissionCompletions=[]; this.runSkillLevels={}; this.runEvolutions={}; this.runDrops=[]; this.autoMove=false; this.pendingLevelUps=0; this.levelGrowthQueue=[]; this.state=GAME_STATE.RUNNING; this.runResult='gameover';
     this.applyCharacterStart();
     this.waveSystem.startWave(this.wave);
     this.log(`探索開始: ${this.depth.name} / ${this.selectedCharacter.name}`);
+    if(this.selectedChallenge.id!=='none') this.log(`チャレンジ: ${this.selectedChallenge.name} / 報酬x${this.selectedChallenge.rewardMultiplier}`);
     this.last=performance.now(); cancelAnimationFrame(this.raf); this.raf=requestAnimationFrame(t=>this.loop(t));
   }
   applyCharacterStart(){
     for(const id of this.selectedCharacter.initialSkills||[]){
       const s=SKILL_POOL.find(x=>x.id===id); if(!s) continue;
-      this.runSkillLevels[id]=1; applySkillLevel(this.player,s); this.runSkills.push({...s, chosenLevel:1});
+      const startLv=1 + (this.masteryBonuses.startSkillLevelBonus||0);
+      this.runSkillLevels[id]=startLv;
+      for(let lv=1; lv<=startLv; lv++) applySkillLevel(this.player,s);
+      this.runSkills.push({...s, chosenLevel:startLv});
     }
     if(this.selectedCharacter.id==='stormcaller'){ this.player.flags.chainLightning=(this.player.flags.chainLightning||0)+1; this.player.elemental+=0.2; }
+    this.player.stoneGain += this.masteryBonuses.startStoneRate || 0;
+    if(this.masteryBonuses.specialDamageBonus) this.player.elemental += this.masteryBonuses.specialDamageBonus;
     if(this.selectedCharacter.id==='pilgrim'){ this.player.flags.reflectBullets=(this.player.flags.reflectBullets||0)+1; this.player.flags.shieldGuard=(this.player.flags.shieldGuard||0)+1; }
     if(this.selectedCharacter.id==='witch'){ this.player.flags.toxicCloud=(this.player.flags.toxicCloud||0)+1; }
     if(this.selectedCharacter.id==='spiritmaster'){ this.player.flags.minions=(this.player.flags.minions||0)+1; }
@@ -132,9 +146,15 @@ export class Game{
     }
     if(p.flags.toxicCloud && e.poison>0){ this.hazards.push({kind:'playerDot',x:e.x,y:e.y,r:70+7*p.flags.toxicCloud+(p.flags.plagueAbyss?32:0),timer:3.4+(p.flags.plagueAbyss?1.2:0),damage:p.damage*(.18+.04*p.flags.toxicCloud+(p.flags.plagueAbyss?.06:0)),color:'#76f2aa',tick:.25}); }
     if(e.flags.boss || e.flags.elite || Math.random() < (.04 + p.dropRate + this.wave*.0025)){
-      const eq=rollEquipment(this.wave,p.rarityLuck + this.depth.rare); this.runDrops.push(eq); if((RARITIES[eq.rarity]?.order||0)>=4) this.save.legendaryFound=(this.save.legendaryFound||0)+1;
-      const equipped=addEquipment(this.save,eq);
-      this.log(`${equipped?'装備更新':'装備入手'}: ${eq.name}`);
+      const eq=rollEquipment(this.wave,p.rarityLuck + this.depth.rare, this.depth.id); this.runDrops.push(eq); if((RARITIES[eq.rarity]?.order||0)>=4) this.save.legendaryFound=(this.save.legendaryFound||0)+1;
+      const added=addEquipment(this.save,eq);
+      if(added.autoDismantled){
+        this.autoDismantledCount++;
+        this.autoDismantledStones+=added.gained;
+        this.log(`自動分解: ${eq.name} / +${added.gained} 深淵石`);
+      } else {
+        this.log(`${added.equipped?'装備更新':'装備入手'}: ${eq.name}`);
+      }
     }
   }
   nextWave(){
@@ -146,8 +166,9 @@ export class Game{
     const waveFactor=1+Math.min(0.35,this.wave*0.012);
     const owned=(this.runSkillLevels[skill.id]||0)>0 ? 1.12 : 1;
     let tagFactor=1;
-    if(skill.tags?.some(t=>this.selectedCharacter.favorableTags.includes(t))) tagFactor*=this.selectedCharacter.skillWeightBias.favorable;
+    if(skill.tags?.some(t=>this.selectedCharacter.favorableTags.includes(t))) tagFactor*=this.selectedCharacter.skillWeightBias.favorable*(1+(this.masteryBonuses.favoredTagBoost||0));
     if(skill.tags?.some(t=>this.selectedCharacter.unfavorableTags.includes(t))) tagFactor*=this.selectedCharacter.skillWeightBias.unfavorable;
+    const rarityBonus=(skill.rarity==='Legendary'||skill.rarity==='Mythic')?(1+(this.masteryBonuses.highRaritySkillBoost||0)):1;
     const evoNear=EVOLUTIONS.some(e=>{
       const req=(e.requires&&e.requires[skill.id])||0;
       if(req && (this.runSkillLevels[skill.id]||0)<req){
@@ -156,7 +177,7 @@ export class Game{
       }
       return false;
     }) ? 1.15 : 1;
-    return Math.max(0.01, rarityWeight*depthFactor*waveFactor*owned*tagFactor*evoNear*(0.85+Math.random()*0.3));
+    return Math.max(0.01, rarityWeight*depthFactor*waveFactor*owned*tagFactor*evoNear*rarityBonus*(0.85+Math.random()*0.3));
   }
   chooseSkillOptions(){
     const options=[]; const used=new Set(); let guard=0;
@@ -194,7 +215,7 @@ export class Game{
     if(this.state!==GAME_STATE.RUNNING) return;
     this.state=GAME_STATE.LEVELUP;
     const choices=[
-      {name:'深淵宝箱',desc:'現在Wave相当の装備を3個獲得。',run:()=>{ for(let i=0;i<3;i++){ const eq=rollEquipment(this.wave+3,this.player.rarityLuck+this.depth.rare+.08); this.runDrops.push(eq); addEquipment(this.save,eq); } }},
+      {name:'深淵宝箱',desc:'現在Wave相当の装備を3個獲得。',run:()=>{ for(let i=0;i<3;i++){ const eq=rollEquipment(this.wave+3,this.player.rarityLuck+this.depth.rare+.08,this.depth.id); this.runDrops.push(eq); addEquipment(this.save,eq); } }},
       {name:'魂の圧縮',desc:'即座に大量経験値を獲得。',run:()=>{ const ups=this.player.gainXp(this.player.nextXp*1.8); for(let j=0;j<ups;j++) this.levelGrowthQueue.push(this.applyBaseGrowth()); this.pendingLevelUps+=ups; }},
       {name:'深淵石大量獲得',desc:'深淵石を大量に獲得。',run:()=>{ const gain=Math.ceil((450+this.wave*140)*this.depth.reward*(1+this.player.stoneGain)); this.runStones+=gain; this.log(`裂け目報酬: 深淵石 +${gain}`); }},
     ].sort(()=>Math.random()-.5).slice(0,3);
@@ -209,11 +230,34 @@ export class Game{
     this.runResult=type;
     this.state=GAME_STATE.GAMEOVER; this.save.totalRuns++; this.save.bestWave=Math.max(this.save.bestWave,this.wave); this.save.totalKills=(this.save.totalKills||0)+this.kills; this.save.totalBossKills=(this.save.totalBossKills||0)+this.bossKillsThisRun;
     const carryRate=type==='return'?1:0.72;
-    const total=Math.ceil((this.runStones + Math.pow(this.wave,2.02) + this.kills*.22)*this.depth.reward*carryRate);
+    const challengeRate=this.challengeModifiers.rewardMultiplier||1;
+    const total=Math.ceil((this.runStones + Math.pow(this.wave,2.02) + this.kills*.22)*this.depth.reward*carryRate*challengeRate);
     this.save.abyssStones+=total; this.save.lifetimeStones=(this.save.lifetimeStones||0)+total;
+
     const cs=this.save.characterStats[this.selectedCharacter.id]; cs.bestWave=Math.max(cs.bestWave||0,this.wave); cs.bestDepth=Math.max(cs.bestDepth||1,this.depth.id);
+    const cm=this.save.characterMastery[this.selectedCharacter.id];
+    cm.totalRuns=(cm.totalRuns||0)+1; cm.totalKills=(cm.totalKills||0)+this.kills; cm.totalAbyssStonesEarned=(cm.totalAbyssStonesEarned||0)+total;
+    cm.highestWave=Math.max(cm.highestWave||0,this.wave); cm.highestDepth=Math.max(cm.highestDepth||1,this.depth.id);
+    const gainedMasteryExp=calcMasteryExpGain({wave:this.wave, depth:this.depth.id, bossKills:this.bossKillsThisRun, result:type, challengeRewardMultiplier:challengeRate});
+    const beforeLevel=cm.masteryLevel||1;
+    cm.masteryExp=(cm.masteryExp||0)+gainedMasteryExp;
+    const masteryResult=calculateMasteryLevel(cm.masteryExp);
+    cm.masteryLevel=masteryResult.level;
+    cm.unlockedMasteryRewards=Array.from(new Set([...(cm.unlockedMasteryRewards||[]), ...getUnlockedMasteryRewards(cm.masteryLevel)]));
+
+    const rarityOrder=['Common','Rare','Epic','Legendary','Mythic','Abyssal'];
+    const highestRarity=this.runDrops.reduce((best,it)=>rarityOrder.indexOf(it.rarity)>rarityOrder.indexOf(best)?it.rarity:best,'Common');
+    this.runMissionCompletions=evaluateDepthMissions(this.save,{ depth:this.depth.id, wave:this.wave, bossKills:this.bossKillsThisRun, result:type, highestRarityFound:highestRarity, masteryLevel:cm.masteryLevel, characterId:this.selectedCharacter.id });
+    this.runMissionRewards=applyMissionRewards(this.save,cm,this.runMissionCompletions);
+    if(this.selectedChallenge.id!=='none' && this.wave>=10){
+      this.save.challengeProgress.cleared[this.selectedChallenge.id]=Math.max(this.save.challengeProgress.cleared[this.selectedChallenge.id]||0,this.wave);
+    }
+
+    const after=calculateMasteryLevel(cm.masteryExp);
     const achievementMsgs=this.unlockAchievements(); saveGame(this.save); this.app.refreshTitle();
-    modal(`<h2>${type==='return'?'帰還成功':'ゲームオーバー'}</h2><p class="lead">${this.selectedCharacter.name} / ${this.depth.name}</p><div class="result-grid"><div><span>到達Wave</span><strong>${this.wave}</strong></div><div><span>獲得深淵石</span><strong>${format(total)}</strong></div><div><span>Boss撃破</span><strong>${this.bossKillsThisRun}</strong></div><div><span>入手装備</span><strong>${this.runDrops.length}</strong></div></div>${achievementMsgs.length?`<div class="notice-list">${achievementMsgs.map(x=>`<div>${x}</div>`).join('')}</div>`:''}<div class="modal-actions"><button id="retryBtn" class="btn primary">再挑戦</button><button id="toTitleBtn" class="btn">タイトルへ</button></div>`);
+    const levelUpMsg=after.level>beforeLevel?`<div class='notice'>熟練度 Lv${beforeLevel} → Lv${after.level}</div>`:'';
+    const missionRows=this.runMissionCompletions.map(m=>`<div>達成: ${m.name}</div>`).join('');
+    modal(`<h2>${type==='return'?'帰還成功':'ゲームオーバー'}</h2><p class="lead">${this.selectedCharacter.name} / ${this.depth.name}</p><div class="result-grid"><div><span>到達Wave</span><strong>${this.wave}</strong></div><div><span>獲得深淵石</span><strong>${format(total)}</strong></div><div><span>Boss撃破</span><strong>${this.bossKillsThisRun}</strong></div><div><span>入手装備</span><strong>${this.runDrops.length}</strong></div><div><span>熟練EXP</span><strong>+${gainedMasteryExp + (this.runMissionRewards.masteryExp||0)}</strong></div><div><span>自動分解</span><strong>${this.autoDismantledCount}件 / +${this.autoDismantledStones}</strong></div><div><span>チャレンジ</span><strong>${this.selectedChallenge.name}</strong></div><div><span>倍率</span><strong>x${challengeRate.toFixed(2)}</strong></div></div>${levelUpMsg}${missionRows?`<div class='notice-list'>${missionRows}</div>`:''}${achievementMsgs.length?`<div class="notice-list">${achievementMsgs.map(x=>`<div>${x}</div>`).join('')}</div>`:''}<div class="modal-actions"><button id="retryBtn" class="btn primary">再挑戦</button><button id="toTitleBtn" class="btn">タイトルへ</button></div>`);
     $('#retryBtn').onclick=()=>{closeModal();this.app.startRun();}; $('#toTitleBtn').onclick=()=>{closeModal();this.app.toTitle();};
   }
   unlockAchievements(){

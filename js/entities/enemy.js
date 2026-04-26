@@ -4,14 +4,14 @@ import { clamp, normalize, rand, randInt } from '../core/utils.js';
 import { Projectile } from './projectile.js';
 
 export class Enemy{
-  constructor(typeId, wave, x, y, depth={enemyHp:1, enemyAtk:1}){
+  constructor(typeId, wave, x, y, depth={enemyHp:1, enemyAtk:1}, challengeMods={}){
     const t = ENEMY_TYPES[typeId] || ENEMY_TYPES.grunt;
     const hpScale = Math.pow(1.18, wave-1);
     const atkScale = Math.pow(1.14, wave-1);
     this.typeId=typeId; this.name=t.name; this.x=x; this.y=y; this.r=t.radius; this.color=t.color;
-    this.maxHp=t.hp*hpScale*depth.enemyHp*(t.boss?1+wave*0.22:1)*(t.elite?1+wave*0.035:1); this.hp=this.maxHp;
-    this.speed=t.speed*(1+wave*0.014); this.damage=t.damage*atkScale*depth.enemyAtk; this.xp=t.xp*Math.pow(1.1,wave-1);
-    this.score=t.score; this.flags=t;
+    this.maxHp=t.hp*hpScale*depth.enemyHp*(challengeMods.enemyHpMultiplier||1)*(t.boss?1+wave*0.22:1)*(t.elite?1+wave*0.035:1); this.hp=this.maxHp;
+    this.speed=t.speed*(1+wave*0.014)*(challengeMods.enemySpeedMultiplier||1); this.damage=t.damage*atkScale*depth.enemyAtk*(challengeMods.enemyDamageMultiplier||1); this.xp=t.xp*Math.pow(1.1,wave-1);
+    this.score=t.score; this.flags=t; this.challengeMods=challengeMods;
     this.cd=rand(0,1.4); this.shootCd=rand(.4,2.2); this.specialCd=rand(1.2,3.5); this.summonCd=rand(3,5);
     this.slow=0; this.poison=0; this.poisonDps=0; this.bleed=0; this.bleedDps=0; this.burn=0; this.burnDps=0; this.wasExecuted=false;
     this.critResist=Math.min(.55,(t.critResist||0)+wave*.006+(t.boss?.08:0));
@@ -55,11 +55,12 @@ export class Enemy{
     this.shootCd=this.flags.boss?1.2: this.flags.elite?1.55:2.15;
     const n=normalize(game.player.x-this.x, game.player.y-this.y);
     const spread=this.flags.boss?[-.18,0,.18]:[0];
-    for(const s of spread){
+    const projectileMult=this.challengeMods.projectileMultiplier||1;
+    for(let i=0;i<Math.max(1,Math.round(projectileMult));i++){ for(const s of spread){
       const cs=Math.cos(s), sn=Math.sin(s);
       const vx=n.x*cs-n.y*sn, vy=n.x*sn+n.y*cs;
       game.projectiles.push(new Projectile(this.x,this.y,null,this.damage*.9,{owner:'enemy',vx,vy,speed:this.flags.boss?300:260,r:this.flags.boss?7:5,life:3,color:this.flags.boss?'#ff5d73':'#80d7ff'}));
-    }
+    }}
     game.effects.push({type:'circle',x:this.x,y:this.y,r:this.r+8,life:.18,color:'#80d7ff'});
   }
   tryHeal(dt, game){
