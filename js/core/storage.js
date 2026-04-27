@@ -4,23 +4,6 @@ import { DEFAULT_CHARACTER_ID, CHARACTERS } from '../data/characters.js';
 import { getUnlockedMasteryRewards, calculateMasteryLevel } from '../data/mastery.js';
 import { DEFAULT_AUTOMATION_SETTINGS } from '../systems/automation.js';
 
-const DEFAULT_AUTOMATION_SETTINGS = {
-  autoRunEnabled: false,
-  skillSelectionMode: 'manual',
-  waveRewardMode: 'manual',
-  autoReturnEnabled: false,
-  autoReturnHpThreshold: 30,
-  autoReturnWaveTarget: 20,
-  skillAutoPreset: 'balanced',
-  waveRewardPreset: 'expFixed',
-  lightweightMode: false,
-  speedLightweightMode: true,
-  damageNumberMode: 'normal',
-  orbOptimization: true,
-  enemyDensityMode: 'balanced',
-  autoLogLimit: 50,
-};
-
 function defaultCharacterMastery() {
   return {
     masteryExp: 0,
@@ -151,7 +134,15 @@ export function loadSave() {
   }
 }
 
-export function saveGame(save) { localStorage.setItem(CONFIG.storageKey, JSON.stringify(save)); }
+export function saveGame(save) {
+  try {
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify(save));
+    return true;
+  } catch (e) {
+    console.warn('Save write failed', e);
+    return false;
+  }
+}
 export function addStones(save, amount) { save.abyssStones = Math.max(0, Math.floor(save.abyssStones + amount)); save.lifetimeStones = (save.lifetimeStones || 0) + Math.max(0, Math.floor(amount)); saveGame(save); }
 export function exportSave(save) { return btoa(unescape(encodeURIComponent(JSON.stringify(normalizeSave(save))))); }
 export function importSave(text) { return normalizeSave(JSON.parse(decodeURIComponent(escape(atob(text.trim()))))); }
