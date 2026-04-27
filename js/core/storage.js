@@ -2,6 +2,7 @@ import { CONFIG, EQUIPMENT_SLOTS } from './constants.js';
 import { UPGRADE_DEFS } from '../data/upgrades.js';
 import { DEFAULT_CHARACTER_ID, CHARACTERS } from '../data/characters.js';
 import { getUnlockedMasteryRewards, calculateMasteryLevel } from '../data/mastery.js';
+import { DEFAULT_AUTOMATION_SETTINGS } from '../systems/automation.js';
 
 const DEFAULT_AUTOMATION_SETTINGS = {
   autoRunEnabled: false,
